@@ -10,33 +10,42 @@ class Jogadores(models.Model):
         (DIREITO, ("Direito")),
         (ESQUERDO, ("Esquerdo")),
     )
+    NOTA_CHOICES = tuple([(x, x) for x in range(1, 6)])
+
     nome = models.CharField(max_length=255, )
-    nivel = models.IntegerField(max_length=10)
+    rating = models.SmallIntegerField(verbose_name='Nota', choices=NOTA_CHOICES, default=3)
     pelada = models.ForeignKey('Pelada', related_name='jogadores', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Times(models.Model):
     nome = models.CharField(max_length=255)
     jogadores = models.ForeignKey(Jogadores, related_name='jogadores', on_delete=models.CASCADE)
-    pelada = models.ForeignKey('Pelada', related_name='times', on_delete=models.CASCADE)
+    pelada = models.ManyToManyField('Pelada', related_name='times')
 
 
 class Partidas(models.Model):
-    gols = models.ForeignKey("Gol")
-    times = models.ForeignKey("Times", related_name="partidas")
-    pelada = models.ForeignKey('Pelada', related_name='times', on_delete=models.CASCADE)
+    gols = models.ForeignKey("Gol", on_delete=models.CASCADE)
+    times = models.ForeignKey("Times", related_name="partidas", on_delete=models.CASCADE)
+
 
 class Pelada(models.Model):
     nome = models.CharField(max_length=200)
-    configuracao = models.OneToOneField('Configuracao')
+    configuracao = models.OneToOneField('Configuracao', on_delete=models.CASCADE)
+
+    @property
+    def create_times(self):
+        if self.configuracao.tipo_sorteio == self.configuracao.ORDEM_CHEGADA:
+            qtd_jogadores = self.jogadores.all().count()
+            jogadores = self.jogadores.all().order_by('created_at')
 
 
 class Gol(models.Model):
-    jogador = models.OneToOneField("Jogador", related_name='gols_jogador')
-    time = models.OneToOneField("Time", related_name='gols_time')
+    jogador = models.OneToOneField("Jogadores", related_name='gols_jogador', on_delete=models.CASCADE)
+    time = models.OneToOneField("Times", related_name='gols_time', on_delete=models.CASCADE)
 
 
-class Configuracao(models.model):
+class Configuracao(models.Model):
     TEMPO1, TEMPO2 = "T1", "T2"
     TEMPOS = (
         (TEMPO1, ("1 Tempo")),
@@ -70,3 +79,4 @@ class Configuracao(models.model):
     limite_gols = models.CharField(max_length=1, choices=LIMITE_GOLS)
     qtd_jogadores = models.CharField(max_length=1, choices=QTD_JOGADORES)
     tipo_sorteio = models.CharField(max_length=1, choices=TIPO_SORTEIO)
+
