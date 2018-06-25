@@ -3,8 +3,7 @@ from django.db import models
 
 # Create your models here.
 
-
-class Jogadores(models.Model):
+class Jogador(models.Model):
     DIREITO, ESQUERDO = "D", "E"
     MELHOR_PE = (
         (DIREITO, ("Direito")),
@@ -17,16 +16,48 @@ class Jogadores(models.Model):
     pelada = models.ForeignKey('Pelada', related_name='jogadores', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        jogador = self
+        super(Jogador, self).save()
+        Checkin.objects.create(jogador=jogador, status="D", pelada=jogador.pelada)
 
-class Times(models.Model):
+
+class Time(models.Model):
     nome = models.CharField(max_length=255)
-    jogadores = models.ForeignKey(Jogadores, related_name='jogadores', on_delete=models.CASCADE)
-    pelada = models.ManyToManyField('Pelada', related_name='times')
+    jogadores = models.ManyToManyField(Jogador, related_name='times')
+    pelada = models.ForeignKey('Pelada', related_name='times', on_delete=models.CASCADE)
 
 
-class Partidas(models.Model):
+class Partida(models.Model):
     gols = models.ForeignKey("Gol", on_delete=models.CASCADE)
-    times = models.ForeignKey("Times", related_name="partidas", on_delete=models.CASCADE)
+    times = models.ForeignKey("Time", related_name="partidas", on_delete=models.CASCADE)
+
+
+class Checkin(models.Model):
+    DISPONIVEL, NA_PELADA, REMOVIDO = "D", "P", "R"
+    STATUS = (
+        (DISPONIVEL, ("Disponivel")),
+        (NA_PELADA, ("Na pelada")),
+        (REMOVIDO, ("Removido")),
+    )
+    jogador = models.OneToOneField("Jogador", on_delete=models.CASCADE, related_name="checkin")
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=1, choices=STATUS)
+    pelada = models.ForeignKey('Pelada', related_name='checkins', on_delete=models.CASCADE)
+
+
+class HistoricoChecking(models.Model):
+    DISPONIVEL, NA_PELADA, REMOVIDO = "D", "P", "R"
+
+    STATUS = (
+        (DISPONIVEL, ("Disponivel")),
+        (NA_PELADA, ("Na pelada")),
+        (REMOVIDO, ("Removido")),
+    )
+    jogador = models.ForeignKey("Jogador", on_delete=models.CASCADE, related_name="historico")
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=1, choices=STATUS)
+    to_status = models.CharField(max_length=1, choices=STATUS)
 
 
 class Pelada(models.Model):
@@ -37,12 +68,12 @@ class Pelada(models.Model):
     def create_times(self):
         if self.configuracao.tipo_sorteio == self.configuracao.ORDEM_CHEGADA:
             qtd_jogadores = self.jogadores.all().count()
-            jogadores = self.jogadores.all().order_by('created_at')
+            jogadores = self.jogadores.all()
 
 
 class Gol(models.Model):
-    jogador = models.OneToOneField("Jogadores", related_name='gols_jogador', on_delete=models.CASCADE)
-    time = models.OneToOneField("Times", related_name='gols_time', on_delete=models.CASCADE)
+    jogador = models.OneToOneField("Jogador", related_name='gols_jogador', on_delete=models.CASCADE)
+    time = models.OneToOneField("Time", related_name='gols_time', on_delete=models.CASCADE)
 
 
 class Configuracao(models.Model):
@@ -80,3 +111,8 @@ class Configuracao(models.Model):
     qtd_jogadores = models.CharField(max_length=1, choices=QTD_JOGADORES)
     tipo_sorteio = models.CharField(max_length=1, choices=TIPO_SORTEIO)
 
+
+def add_jogador(jogador):
+    checkin = jogador.checkin
+    checkin.status = Checkin.NA_PELADA
+    checkin.save()
