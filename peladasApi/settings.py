@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework_social_oauth2',
     'players',
     'rest_framework_swagger',
+    'rest_framework.authentication',
 
 ]
 REST_FRAMEWORK = {
