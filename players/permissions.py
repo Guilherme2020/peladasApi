@@ -10,3 +10,6 @@ class IsOwnerPelada(permissions.BasePermission):
                 return True
             else:
                 return False
+class PublicEndpoint(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return True

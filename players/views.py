@@ -8,10 +8,13 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import generics, status, viewsets, exceptions
 from players import permissions
+from .permissions import PublicEndpoint
+
 
 # Create your views here.
 class PeladaViewSet(generics.ListAPIView):
 
+    permission_classes = (PublicEndpoint,)
     name = 'pelada-list'
     serializer_class = serializers.PeladaSerializers
     model = Pelada
