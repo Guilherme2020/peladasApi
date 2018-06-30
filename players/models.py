@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.auth.models import User
 
 # Create your models here.
 
@@ -63,6 +63,7 @@ class HistoricoChecking(models.Model):
 class Pelada(models.Model):
     nome = models.CharField(max_length=200)
     configuracao = models.OneToOneField('Configuracao', on_delete=models.CASCADE)
+    dono = models.ForeignKey(User, on_delete=models.CASCADE, related_name='peladas')
 
     @property
     def create_times(self):

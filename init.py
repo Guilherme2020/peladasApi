@@ -1,5 +1,11 @@
 import datetime
 
+from django.contrib.auth.models import User
+
+dono = User.objects.create(username="dono1", email="dono@dono.com",
+                           password="dono1", is_staff=True)
+dono.set_password("dono1")
+dono.save()
 from players.models import Configuracao, Pelada, Jogador
 
 configuracao1 = Configuracao.objects.create(tempos=Configuracao.TEMPO1, tempo_duracao=datetime.time(0, 5, 0),
@@ -7,7 +13,7 @@ configuracao1 = Configuracao.objects.create(tempos=Configuracao.TEMPO1, tempo_du
                                             qtd_jogadores=Configuracao.QTD_JOGADORES[0][0],
                                             tipo_sorteio=Configuracao.ORDEM_CHEGADA
                                             )
-pelada1 = Pelada.objects.create(nome="PELADA 1", configuracao=configuracao1)
+pelada1 = Pelada.objects.create(nome="PELADA 1", configuracao=configuracao1, dono=dono)
 # #criando jogadores
 jogadores1 = Jogador.objects.create(nome="Willian", rating=4, pelada=pelada1)
 jogadores2 = Jogador.objects.create(nome="Neymar", rating=4, pelada=pelada1)
