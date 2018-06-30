@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework_jwt.views import refresh_jwt_token,obtain_jwt_token
+from rest_framework_jwt.views import refresh_jwt_token,obtain_jwt_token, verify_jwt_token
 from players.views import PeladaViewSet, PeladaDetailViewSet,TimeDetailViewSet ,ConfiguracaoDetailViewSet, PeladaListUser, JogadorDetailViewSet
 from users import views as views_user
 from rest_framework_swagger.views import get_swagger_view
@@ -25,7 +25,9 @@ schema_view = get_swagger_view(title='Pelada API')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api-token-refresh/',obtain_jwt_token),
+    path('api/jwt/token/get',obtain_jwt_token),
+    path('api/jwt/token/refresh',refresh_jwt_token),
+    path('api/jwt/token/verify',verify_jwt_token),
     path('auth/',include('rest_framework_social_oauth2.urls')),
     path('api/peladas/', PeladaViewSet.as_view()),
     path('api/user-peladas/', PeladaListUser.as_view()),
