@@ -1,4 +1,6 @@
+from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Q
 
 
 # Create your models here.
@@ -63,12 +65,31 @@ class HistoricoChecking(models.Model):
 class Pelada(models.Model):
     nome = models.CharField(max_length=200)
     configuracao = models.OneToOneField('Configuracao', on_delete=models.CASCADE)
+    dono = models.ForeignKey(User, on_delete=models.CASCADE, related_name='peladas')
 
     @property
     def create_times(self):
         if self.configuracao.tipo_sorteio == self.configuracao.ORDEM_CHEGADA:
-            qtd_jogadores = self.jogadores.all().count()
-            jogadores = self.jogadores.all()
+            if self.times.all().count() == 0:
+                qtd_jogadores = self.jogadores.all().filter(checkin__status="D").count()
+                jogadores = self.jogadores.all().filter(checkin__status="D")
+                qtd_por_time = self.configuracao.qtd_jogadores
+                pelada = self
+                time1 = Time.objects.create(nome="Time1", pelada=pelada)
+
+                jogadores_time_1 = jogadores.order_by('?')[:int(qtd_por_time)]
+                for jogador in jogadores_time_1:
+                    time1.jogadores.add(jogador)
+                    checkin = jogador.checkin
+                    checkin.status = "P"
+                    checkin.save()
+                jogadores_time_2 = jogadores.filter(~Q(id__in=[o.id for o in jogadores_time_1]))
+                time2 = Time.objects.create(nome="Time2", pelada=pelada)
+                for jogador in jogadores_time_2:
+                    time2.jogadores.add(jogador)
+                    checkin = jogador.checkin
+                    checkin.status = "P"
+                    checkin.save()
 
 
 class Gol(models.Model):
