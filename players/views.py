@@ -6,6 +6,7 @@ from .models import Pelada, Configuracao
 from . import serializers
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework import generics, status, viewsets, exceptions
 
 
 # Create your views here.
@@ -31,19 +32,51 @@ class ConfiguracaoDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     model = Configuracao
 
 
-class PeladaListUser(APIView):
+class PeladaListUser(generics.ListCreateAPIView):
 
-    def get_object(self):
-        return Pelada.objects.all()
+    serializer_class = serializers.PeladaSerializerDetail
 
-    """
-       List all snippets, or create a new snippet.
-       """
+    def get_queryset(self):
+        return Pelada.objects.filter(dono=self.request.user)
 
-    def get(self, request, format=None):
-        peladas = self.get_object().filter(dono=request.user)
-        serializer_context = {
-            'request': request,
-        }
-        serializer = serializers.PeladaSerializerDetail(peladas, many=True, context=serializer_context)
-        return Response(serializer.data)
+    def validate(self, data):
+        errors = {}
+        dono = data.get('dono')
+
+        if self.request.user != dono:
+            errors['error'] = 'O usuario não pode criar'
+            raise serializers.ValidationError(errors)
+
+        return data
+
+    def post(self, request, *args, **kwargs):
+        dono = request.data['dono']
+        dono = dono.split('/')
+        tamanho = len(dono)
+        dono = int(dono[tamanho - 1])
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if dono == self.request.user.id:
+
+            if serializer.is_valid():
+                pelada = serializer.save()
+
+                print(self.request.user.id)
+                return Response(status=status.HTTP_201_CREATED,
+                                    data=serializers.PeladaSerializers(pelada, context={'request': request}).data)
+        else:
+            raise exceptions.NotAcceptable(detail=('O usuario só pode criar peladas para ele.'))
+
+    # def get_object(self):
+    #     return Pelada.objects.all()
+    #
+    # """
+    #    List all snippets, or create a new snippet.
+    #    """
+    #
+    # def get(self, request, format=None):
+    #     peladas = self.get_object().filter(dono=request.user)
+    #     serializer_context = {
+    #         'request': request,
+    #     }
+    #     serializer = serializers.PeladaSerializerDetail(peladas, many=True, context=serializer_context)
+    #     return Response(serializer.data)
