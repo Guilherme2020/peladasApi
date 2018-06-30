@@ -23,6 +23,7 @@ class PeladaViewSet(generics.ListAPIView):
 class PeladaDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
         permissions.IsOwnerPelada,
+        permissions.IsAuthenticated,
 
     )
     name = 'pelada-detail'
