@@ -2,12 +2,12 @@ from rest_framework import mixins
 from rest_framework import viewsets
 from rest_framework.views import APIView
 
-from .models import Pelada, Configuracao
+from .models import Pelada, Configuracao, Jogador, Time
 from . import serializers
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import generics, status, viewsets, exceptions
-
+from players import permissions
 
 # Create your views here.
 class PeladaViewSet(generics.ListAPIView):
@@ -15,14 +15,31 @@ class PeladaViewSet(generics.ListAPIView):
     name = 'pelada-list'
     serializer_class = serializers.PeladaSerializers
     model = Pelada
-    queryset =  Pelada.objects.all()
+    queryset = Pelada.objects.all()
 
 class PeladaDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = (
+        permissions.IsOwnerPelada,
 
+    )
     name = 'pelada-detail'
     queryset =  Pelada.objects.all()
     serializer_class = serializers.PeladaSerializerDetail
     model = Pelada
+
+class JogadorDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
+
+    name = 'jogador-detail'
+    queryset =  Jogador.objects.all()
+    serializer_class = serializers.JogadoresSerializerDetail
+    model = Jogador
+
+class TimeDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
+
+    name = 'times-detail'
+    queryset =  Time.objects.all()
+    serializer_class = serializers.TimesSerializerDetail
+    model = Time
 
 class ConfiguracaoDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
 
