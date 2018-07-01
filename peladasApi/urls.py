@@ -13,13 +13,19 @@ Including another URLconf
     1. Import the include() function:p from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from players.views import *
+
+obtain_jwt_token = ObtainJSONWebToken.as_view()
+refresh_jwt_token = RefreshJSONWebToken.as_view()
+verify_jwt_token = VerifyJSONWebToken.as_view()
+
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework_jwt.views import refresh_jwt_token,obtain_jwt_token, verify_jwt_token
+# from rest_framework_jwt.views import refresh_jwt_token,obtain_jwt_token, verify_jwt_token
 from players.views import PeladaViewSet, PeladaDetailViewSet,TimeDetailViewSet ,ConfiguracaoDetailViewSet, PeladaListUser, JogadorDetailViewSet
 from users import views as views_user
 from rest_framework_swagger.views import get_swagger_view
-
+# from players.views import
 
 schema_view = get_swagger_view(title='Pelada API')
 

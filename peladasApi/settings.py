@@ -69,9 +69,9 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'obtain-token': '10000/hour',
-        'anon': '20000/hour',
-        'user': '50000/hour',
+        'obtain-token': '1/hour',
+        'anon': '20/hour',
+        'user': '50/hour',
     },
 }
 AUTHENTICATION_BACKENDS = (
