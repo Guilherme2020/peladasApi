@@ -23,7 +23,6 @@ class PeladaViewSet(generics.ListAPIView):
 class PeladaDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
         permissions.IsOwnerPelada,
-        permissions.IsAuthenticated,
 
     )
     name = 'pelada-detail'
@@ -32,6 +31,10 @@ class PeladaDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     model = Pelada
 
 class JogadorDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = (
+        permissions.IsPelada,
+
+    )
 
     name = 'jogador-detail'
     queryset =  Jogador.objects.all()
@@ -40,12 +43,21 @@ class JogadorDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
 
 class TimeDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
 
+    permission_classes = (
+        permissions.IsPelada,
+
+    )
+
     name = 'times-detail'
     queryset =  Time.objects.all()
     serializer_class = serializers.TimesSerializerDetail
     model = Time
 
 class ConfiguracaoDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = (
+        permissions.IsPelada,
+
+    )
 
     name = 'configuracao-detail'
     queryset =  Configuracao.objects.all()
@@ -87,17 +99,3 @@ class PeladaListUser(generics.ListCreateAPIView):
         else:
             raise exceptions.NotAcceptable(detail=('O usuario só pode criar peladas para ele.'))
 
-    # def get_object(self):
-    #     return Pelada.objects.all()
-    #
-    # """
-    #    List all snippets, or create a new snippet.
-    #    """
-    #
-    # def get(self, request, format=None):
-    #     peladas = self.get_object().filter(dono=request.user)
-    #     serializer_context = {
-    #         'request': request,
-    #     }
-    #     serializer = serializers.PeladaSerializerDetail(peladas, many=True, context=serializer_context)
-    #     return Response(serializer.data)

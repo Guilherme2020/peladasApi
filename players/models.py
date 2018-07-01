@@ -21,7 +21,9 @@ class Jogador(models.Model):
     def save(self, *args, **kwargs):
         jogador = self
         super(Jogador, self).save()
-        Checkin.objects.create(jogador=jogador, status="D", pelada=jogador.pelada)
+        checkin = Checkin.objects.filter(jogador=jogador)
+        if checkin.count() == 0:
+            Checkin.objects.create(jogador=jogador, status="D", pelada=jogador.pelada)
 
 
 class Time(models.Model):
