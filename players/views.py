@@ -1,6 +1,10 @@
 from rest_framework import mixins
 from rest_framework import viewsets
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+from rest_framework_jwt.serializers import JSONWebTokenSerializer, VerifyJSONWebTokenSerializer, \
+    RefreshJSONWebTokenSerializer
+from rest_framework_jwt.views import JSONWebTokenAPIView
 
 from .models import Pelada, Configuracao, Jogador, Time
 from . import serializers
@@ -12,6 +16,43 @@ from .permissions import PublicEndpoint
 
 
 # Create your views here.
+
+class ObtainJSONWebToken(JSONWebTokenAPIView):
+    """
+    API View that receives a POST with a user's username and password.
+    Returns a JSON Web Token that can be used for authenticated requests.
+    """
+
+    throttle_scope = 'obtain-token'
+    throttle_classes = (ScopedRateThrottle,)
+
+    serializer_class = JSONWebTokenSerializer
+
+class VerifyJSONWebToken(JSONWebTokenAPIView):
+    """
+    API View that checks the veracity of a token, returning the token if it
+    is valid.
+    """
+
+    throttle_scope = 'obtain-token'
+    throttle_classes = (ScopedRateThrottle,)
+    serializer_class = VerifyJSONWebTokenSerializer
+
+
+class RefreshJSONWebToken(JSONWebTokenAPIView):
+    """
+    API View that returns a refreshed token (with new expiration) based on
+    existing token
+    If 'orig_iat' field (original issued-at-time) is found, will first check
+    if it's within expiration window, then copy it to the new token
+    """
+
+    throttle_scope = 'obtain-token'
+    throttle_classes = (ScopedRateThrottle,)
+    serializer_class = RefreshJSONWebTokenSerializer
+
+
+
 class PeladaViewSet(generics.ListAPIView):
 
     permission_classes = (PublicEndpoint,)
