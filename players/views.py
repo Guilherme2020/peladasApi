@@ -15,7 +15,7 @@ from players import permissions
 from .permissions import PublicEndpoint
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
-
+from rest_framework.decorators import detail_route
 
 
 # Create your views here.
@@ -28,7 +28,6 @@ class ObtainJSONWebToken(JSONWebTokenAPIView):
 
     throttle_scope = 'obtain-token'
     throttle_classes = (ScopedRateThrottle,)
-
     serializer_class = JSONWebTokenSerializer
 
 class VerifyJSONWebToken(JSONWebTokenAPIView):
@@ -62,59 +61,50 @@ class PeladaViewSet(mixins.FilteringAndOrderingMixin, generics.ListAPIView ):
     name = 'pelada-list'
     serializer_class = serializers.PeladaSerializers
     model = Pelada
-    # filter_backends = (filters.SearchFilter,
-    #                    DjangoFilterBackend)
     filter_fields = ('dono__username',)
     search_fields = ('nome',)
     queryset = Pelada.objects.all()
 
 
+class PeladaDetailViewSet(mixins.IsOwnerPeladaMixin,  generics.RetrieveUpdateDestroyAPIView):
 
-class PeladaDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (
-        permissions.IsOwnerPelada,
-
-    )
     name = 'pelada-detail'
     queryset =  Pelada.objects.all()
     serializer_class = serializers.PeladaSerializerDetail
     model = Pelada
 
-class JogadorDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (
-        permissions.IsPelada,
-
-    )
+class JogadorDetailViewSet(mixins.IsPeladaMixin,generics.RetrieveUpdateDestroyAPIView):
 
     name = 'jogador-detail'
     queryset =  Jogador.objects.all()
     serializer_class = serializers.JogadoresSerializerDetail
     model = Jogador
 
-class TimeDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
-
-    permission_classes = (
-        permissions.IsPelada,
-
-    )
+class TimeDetailViewSet(mixins.IsPeladaMixin,generics.RetrieveUpdateDestroyAPIView):
 
     name = 'times-detail'
     queryset =  Time.objects.all()
     serializer_class = serializers.TimesSerializerDetail
     model = Time
 
-class ConfiguracaoDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (
-        permissions.IsPelada,
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        jogadores = instance.jogadores.all()
+        for jogador in jogadores:
+            checking = jogador.checkin
+            checking.status = "D"
+            checking.save()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-    )
+class ConfiguracaoDetailViewSet(mixins.IsPeladaMixin,generics.RetrieveUpdateDestroyAPIView):
 
     name = 'configuracao-detail'
     queryset =  Configuracao.objects.all()
     serializer_class = serializers.ConfiguracaoSerializerDetail
     model = Configuracao
 
-class TimeList(generics.ListCreateAPIView):
+class TimeList(generics.ListCreateAPIView, generics.RetrieveDestroyAPIView):
 
     serializer_class = serializers.TimesSerializerDetail
     queryset =  Time.objects.all()
@@ -144,21 +134,43 @@ class ConfiguracaoList(generics.ListCreateAPIView):
                         data=serializers.ConfiguracaoSerializerDetail(configuracoes, many=True, context={'request': request}).data)
 
 class JogadoresList(mixins.FilteringAndOrderingMixin, generics.ListCreateAPIView):
+    filter_backends = (
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    )
 
-    filter_fields = ('rating',)
     search_fields = ('nome',)
+    filter_fields = ('rating',)
     serializer_class = serializers.JogadoresSerializerDetail
     queryset =  Jogador.objects.all()
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
 
-    def list(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
         user = self.request.user
+        queryset = queryset.filter(pelada__dono=user)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
         jogador = Jogador.objects.filter(pelada__dono=user)
-        return Response(status=status.HTTP_200_OK,
-                        data=serializers.JogadoresSerializerDetail(jogador, many=True,
-                                                                      context={'request': request}).data)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        pelada = request.data['pelada'].split('/')[5]
+        if Pelada.objects.filter(dono=request.user, pk=pelada).count() > 0:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            return Response({"status":"Voce só pode adicionar jogadores as suas peladas"},status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 class PeladaListUser(generics.ListCreateAPIView):
@@ -194,3 +206,17 @@ class PeladaListUser(generics.ListCreateAPIView):
         else:
             raise exceptions.NotAcceptable(detail=('O usuario só pode criar peladas para ele.'))
 
+
+class CreateTimes(viewsets.ViewSet):
+
+    @detail_route(methods=['post'])
+    def create_times(self, request, pk=None):
+            pelada = self.get_queryset().get(pk=pk)
+            if pelada.create_times == True:
+                return Response({"status":"Times criados"},status=status.HTTP_200_OK)
+            if pelada.create_times == False:
+                return Response({"status":"Times ja criados ou sua solicitacao possui erro"},status=status.HTTP_401_UNAUTHORIZED)
+
+    def get_queryset(self):
+        qs = Pelada.objects.all()
+        return qs
