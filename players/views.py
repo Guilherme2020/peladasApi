@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework_jwt.serializers import JSONWebTokenSerializer, VerifyJSONWebTokenSerializer, \
     RefreshJSONWebTokenSerializer
 from rest_framework_jwt.views import JSONWebTokenAPIView
-
+from players import mixins
 from .models import Pelada, Configuracao, Jogador, Time
 from . import serializers
 from rest_framework import generics
@@ -13,6 +13,9 @@ from rest_framework.response import Response
 from rest_framework import generics, status, viewsets, exceptions
 from players import permissions
 from .permissions import PublicEndpoint
+from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
+
 
 
 # Create your views here.
@@ -53,13 +56,19 @@ class RefreshJSONWebToken(JSONWebTokenAPIView):
 
 
 
-class PeladaViewSet(generics.ListAPIView):
+class PeladaViewSet(mixins.FilteringAndOrderingMixin, generics.ListAPIView ):
 
     permission_classes = (PublicEndpoint,)
     name = 'pelada-list'
     serializer_class = serializers.PeladaSerializers
     model = Pelada
+    # filter_backends = (filters.SearchFilter,
+    #                    DjangoFilterBackend)
+    filter_fields = ('dono__username',)
+    search_fields = ('nome',)
     queryset = Pelada.objects.all()
+
+
 
 class PeladaDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
@@ -105,6 +114,52 @@ class ConfiguracaoDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.ConfiguracaoSerializerDetail
     model = Configuracao
 
+class TimeList(generics.ListCreateAPIView):
+
+    serializer_class = serializers.TimesSerializerDetail
+    queryset =  Time.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        user = self.request.user
+        times = Time.objects.filter(pelada__dono=user)
+        return Response(status=status.HTTP_200_OK,
+                        data=serializers.TimesSerializerDetail(times, many=True, context={'request': request}).data)
+
+
+class ConfiguracaoList(generics.ListCreateAPIView):
+
+    serializer_class = serializers.ConfiguracaoSerializerDetail
+    queryset =  Configuracao.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        user = self.request.user
+        configuracoes = Configuracao.objects.filter(pelada__dono=user)
+        return Response(status=status.HTTP_200_OK,
+                        data=serializers.ConfiguracaoSerializerDetail(configuracoes, many=True, context={'request': request}).data)
+
+class JogadoresList(mixins.FilteringAndOrderingMixin, generics.ListCreateAPIView):
+
+    filter_fields = ('rating',)
+    search_fields = ('nome',)
+    serializer_class = serializers.JogadoresSerializerDetail
+    queryset =  Jogador.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        user = self.request.user
+        jogador = Jogador.objects.filter(pelada__dono=user)
+        return Response(status=status.HTTP_200_OK,
+                        data=serializers.JogadoresSerializerDetail(jogador, many=True,
+                                                                      context={'request': request}).data)
+
 
 class PeladaListUser(generics.ListCreateAPIView):
 
@@ -134,7 +189,6 @@ class PeladaListUser(generics.ListCreateAPIView):
             if serializer.is_valid():
                 pelada = serializer.save()
 
-                print(self.request.user.id)
                 return Response(status=status.HTTP_201_CREATED,
                                     data=serializers.PeladaSerializers(pelada, context={'request': request}).data)
         else:
