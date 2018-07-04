@@ -109,7 +109,7 @@ class ConfiguracaoDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
 class PeladaListUser(generics.ListCreateAPIView):
 
     serializer_class = serializers.PeladaSerializerDetail
-
+    name = 'pelada-list-user'
     def get_queryset(self):
         return Pelada.objects.filter(dono=self.request.user)
 

@@ -11,7 +11,7 @@ class ApiTestPeladas(APITestCase):
 
 
     def test_url(self):
-        url = reverse('api/peladas')
+        url = reverse('pelada-list')
         response = self.client.get(url, format='json')
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -22,7 +22,7 @@ class ApiTestPeladas(APITestCase):
 class ApitUserPeladas(APITestCase):
 
     def test_url(self):
-        url = reverse('api/user-peladas')
+        url = reverse('user-peladas')
         response = self.client.get(url, format='json')
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
