@@ -38,7 +38,7 @@ urlpatterns = [
     path('auth/',include('rest_framework_social_oauth2.urls')),
     path('api/peladas/', PeladaViewSet.as_view()),
     path('api/user-peladas/', PeladaListUser.as_view()),
-    path('api/peladas/<int:pk>', PeladaDetailViewSet.as_view(), name='pelada-detail'),
+    path('api/pelada/<int:pk>', PeladaDetailViewSet.as_view(), name='pelada-detail'),
     path('api/configuracao/<int:pk>', ConfiguracaoDetailViewSet.as_view(), name='configuracao-detail'),
     path('api/jogador/<int:pk>', JogadorDetailViewSet.as_view(), name='jogador-detail'),
     path('api/time/<int:pk>', TimeDetailViewSet.as_view(), name='time-detail'),

@@ -87,6 +87,16 @@ class TimeDetailViewSet(mixins.IsPeladaMixin,generics.RetrieveUpdateDestroyAPIVi
     serializer_class = serializers.TimesSerializerDetail
     model = Time
 
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        jogadores = instance.jogadores.all()
+        for jogador in jogadores:
+            checking = jogador.checkin
+            checking.status = "D"
+            checking.save()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class ConfiguracaoDetailViewSet(mixins.IsPeladaMixin,generics.RetrieveUpdateDestroyAPIView):
 
     name = 'configuracao-detail'
@@ -94,7 +104,7 @@ class ConfiguracaoDetailViewSet(mixins.IsPeladaMixin,generics.RetrieveUpdateDest
     serializer_class = serializers.ConfiguracaoSerializerDetail
     model = Configuracao
 
-class TimeList(generics.ListCreateAPIView):
+class TimeList(generics.ListCreateAPIView, generics.RetrieveDestroyAPIView):
 
     serializer_class = serializers.TimesSerializerDetail
     queryset =  Time.objects.all()
@@ -203,9 +213,9 @@ class CreateTimes(viewsets.ViewSet):
     def create_times(self, request, pk=None):
             pelada = self.get_queryset().get(pk=pk)
             if pelada.create_times == True:
-                return Response(status=status.HTTP_200_OK)
+                return Response({"status":"Times criados"},status=status.HTTP_200_OK)
             if pelada.create_times == False:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                return Response({"status":"Times ja criados ou sua solicitacao possui erro"},status=status.HTTP_401_UNAUTHORIZED)
 
     def get_queryset(self):
         qs = Pelada.objects.all()
