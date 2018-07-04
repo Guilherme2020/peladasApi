@@ -26,7 +26,7 @@ from players.views import PeladaViewSet, PeladaDetailViewSet,TimeDetailViewSet ,
 from users import views as views_user
 from rest_framework_swagger.views import get_swagger_view
 # from players.views import
-from players.views import ConfiguracaoList
+from players.views import ConfiguracaoList, CreateTimes
 
 schema_view = get_swagger_view(title='Pelada API')
 
@@ -47,5 +47,5 @@ urlpatterns = [
     path('api/configuracao/', ConfiguracaoList.as_view(), name='configuracao-list'),
     path('api/jogadores/', JogadoresList.as_view(), name='configuracao-list'),
     path('api/times/', TimeList.as_view(), name='configuracao-list'),
-
+    path('api/pelada/<int:pk>/create_times/', CreateTimes.as_view({'post':'create_times'}), name="create-times")
 ]

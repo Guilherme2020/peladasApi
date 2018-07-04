@@ -15,6 +15,7 @@ from players import permissions
 from .permissions import PublicEndpoint
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import detail_route
 
 
 # Create your views here.
@@ -148,6 +149,18 @@ class JogadoresList(mixins.FilteringAndOrderingMixin, generics.ListCreateAPIView
         jogador = Jogador.objects.filter(pelada__dono=user)
         return Response(serializer.data)
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        pelada = request.data['pelada'].split('/')[5]
+        if Pelada.objects.filter(dono=request.user, pk=pelada).count() > 0:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            return Response({"status":"Voce só pode adicionar jogadores as suas peladas"},status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 class PeladaListUser(generics.ListCreateAPIView):
@@ -183,3 +196,17 @@ class PeladaListUser(generics.ListCreateAPIView):
         else:
             raise exceptions.NotAcceptable(detail=('O usuario só pode criar peladas para ele.'))
 
+
+class CreateTimes(viewsets.ViewSet):
+
+    @detail_route(methods=['post'])
+    def create_times(self, request, pk=None):
+            pelada = self.get_queryset().get(pk=pk)
+            if pelada.create_times == True:
+                return Response(status=status.HTTP_200_OK)
+            if pelada.create_times == False:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    def get_queryset(self):
+        qs = Pelada.objects.all()
+        return qs

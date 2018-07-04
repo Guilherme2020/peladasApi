@@ -72,6 +72,7 @@ class Pelada(models.Model):
     @property
     def create_times(self):
         if self.configuracao.tipo_sorteio == self.configuracao.ORDEM_CHEGADA:
+
             if self.times.all().count() == 0:
                 qtd_jogadores = self.jogadores.all().filter(checkin__status="D").count()
                 jogadores = self.jogadores.all().filter(checkin__status="D")
@@ -92,6 +93,9 @@ class Pelada(models.Model):
                     checkin = jogador.checkin
                     checkin.status = "P"
                     checkin.save()
+                return True
+            else:
+                return False
 
 
 class Gol(models.Model):
