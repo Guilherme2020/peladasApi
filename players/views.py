@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework_jwt.serializers import JSONWebTokenSerializer, VerifyJSONWebTokenSerializer, \
     RefreshJSONWebTokenSerializer
 from rest_framework_jwt.views import JSONWebTokenAPIView
-
+from players import mixins
 from .models import Pelada, Configuracao, Jogador, Time
 from . import serializers
 from rest_framework import generics
@@ -53,13 +53,17 @@ class RefreshJSONWebToken(JSONWebTokenAPIView):
 
 
 
-class PeladaViewSet(generics.ListAPIView):
+class PeladaViewSet(generics.ListAPIView, mixins.FilteringAndOrderingMixin):
 
     permission_classes = (PublicEndpoint,)
     name = 'pelada-list'
     serializer_class = serializers.PeladaSerializers
     model = Pelada
+    filter_fields = ('nome',)
+    search_fields = ('nome',)
     queryset = Pelada.objects.all()
+
+
 
 class PeladaDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
