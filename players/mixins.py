@@ -1,5 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import authentication, permissions, filters
+from rest_framework import permissions, filters
+
+from players.permissions import IsPelada, IsOwnerPelada
 
 
 class FilteringAndOrderingMixin(object):
@@ -8,4 +10,17 @@ class FilteringAndOrderingMixin(object):
         DjangoFilterBackend,
         filters.SearchFilter,
         filters.OrderingFilter,
+    )
+
+
+class IsPeladaMixin(object):
+    permission_classes = (
+        IsPelada,
+    )
+
+
+class IsOwnerPeladaMixin(object):
+    permission_classes = (
+        IsOwnerPelada,
+
     )
