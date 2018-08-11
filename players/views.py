@@ -2,9 +2,7 @@ from rest_framework import mixins
 from rest_framework import viewsets
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework_jwt.serializers import JSONWebTokenSerializer, VerifyJSONWebTokenSerializer, \
-    RefreshJSONWebTokenSerializer
-from rest_framework_jwt.views import JSONWebTokenAPIView
+
 from players import mixins
 from .models import Pelada, Configuracao, Jogador, Time
 from . import serializers
@@ -12,46 +10,16 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import generics, status, viewsets, exceptions
 from players import permissions
-from .permissions import PublicEndpoint
+from .permissions import PublicEndpoint, IsOwnerPelada
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import detail_route
+from rest_framework import viewsets, authentication, permissions
 
+from django.http import JsonResponse
 
 # Create your views here.
 
-class ObtainJSONWebToken(JSONWebTokenAPIView):
-    """
-    API View that receives a POST with a user's username and password.
-    Returns a JSON Web Token that can be used for authenticated requests.
-    """
-
-    throttle_scope = 'obtain-token'
-    throttle_classes = (ScopedRateThrottle,)
-    serializer_class = JSONWebTokenSerializer
-
-class VerifyJSONWebToken(JSONWebTokenAPIView):
-    """
-    API View that checks the veracity of a token, returning the token if it
-    is valid.
-    """
-
-    throttle_scope = 'obtain-token'
-    throttle_classes = (ScopedRateThrottle,)
-    serializer_class = VerifyJSONWebTokenSerializer
-
-
-class RefreshJSONWebToken(JSONWebTokenAPIView):
-    """
-    API View that returns a refreshed token (with new expiration) based on
-    existing token
-    If 'orig_iat' field (original issued-at-time) is found, will first check
-    if it's within expiration window, then copy it to the new token
-    """
-
-    throttle_scope = 'obtain-token'
-    throttle_classes = (ScopedRateThrottle,)
-    serializer_class = RefreshJSONWebTokenSerializer
 
 
 
@@ -64,6 +32,8 @@ class PeladaViewSet(mixins.FilteringAndOrderingMixin, generics.ListAPIView ):
     filter_fields = ('dono__username',)
     search_fields = ('nome',)
     queryset = Pelada.objects.all()
+
+  
 
 
 class PeladaDetailViewSet(mixins.IsOwnerPeladaMixin,  generics.RetrieveUpdateDestroyAPIView):
@@ -128,8 +98,13 @@ class ConfiguracaoList(generics.ListCreateAPIView):
         return self.list(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
-        user = self.request.user
-        configuracoes = Configuracao.objects.filter(pelada__dono=user)
+        if request.user.is_anonymous:
+             return Response(status=status.HTTP_401_UNAUTHORIZED,
+                        data=({"Warning": "Voce nao esta autenticado"}))
+        else:
+            user = self.request.user
+            print(self.request)
+            configuracoes = Configuracao.objects.filter(pelada__dono=user)
         return Response(status=status.HTTP_200_OK,
                         data=serializers.ConfiguracaoSerializerDetail(configuracoes, many=True, context={'request': request}).data)
 
@@ -174,11 +149,20 @@ class JogadoresList(mixins.FilteringAndOrderingMixin, generics.ListCreateAPIView
 
 
 class PeladaListUser(generics.ListCreateAPIView):
+    authentication = (authentication.SessionAuthentication)
+    serializer_class = serializers.PeladaSerializers
+    queryset = Pelada.objects.all()
+    def list(self, request, *args, **kwargs):
+        if request.user.is_anonymous:
+             return Response(status=status.HTTP_401_UNAUTHORIZED,
+                        data=({"Warning": "Voce nao esta autenticado"}))
+        else:
+            user = self.request.user
+            peladas = Pelada.objects.filter(dono=user)
+        return Response(status=status.HTTP_200_OK,
+                        data=serializers.PeladaSerializers(peladas, many=True, context={'request': request}).data)
 
-    serializer_class = serializers.PeladaSerializerDetail
 
-    def get_queryset(self):
-        return Pelada.objects.filter(dono=self.request.user)
 
     def validate(self, data):
         errors = {}

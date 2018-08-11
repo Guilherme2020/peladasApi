@@ -15,13 +15,10 @@ Including another URLconf
 """
 from players.views import *
 
-obtain_jwt_token = ObtainJSONWebToken.as_view()
-refresh_jwt_token = RefreshJSONWebToken.as_view()
-verify_jwt_token = VerifyJSONWebToken.as_view()
+
 
 from django.contrib import admin
 from django.urls import path, include
-# from rest_framework_jwt.views import refresh_jwt_token,obtain_jwt_token, verify_jwt_token
 from players.views import PeladaViewSet, PeladaDetailViewSet,TimeDetailViewSet ,ConfiguracaoDetailViewSet, PeladaListUser, JogadorDetailViewSet
 from users import views as views_user
 from rest_framework_swagger.views import get_swagger_view
@@ -32,10 +29,7 @@ schema_view = get_swagger_view(title='Pelada API')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/jwt/token/get',obtain_jwt_token),
-    path('api/jwt/token/refresh',refresh_jwt_token),
-    path('api/jwt/token/verify',verify_jwt_token),
-    path('auth/',include('rest_framework_social_oauth2.urls')),
+    path('api/login', views_user.login),
     path('api/peladas/', PeladaViewSet.as_view()),
     path('api/user-peladas/', PeladaListUser.as_view()),
     path('api/pelada/<int:pk>', PeladaDetailViewSet.as_view(), name='pelada-detail'),
@@ -43,6 +37,7 @@ urlpatterns = [
     path('api/jogador/<int:pk>', JogadorDetailViewSet.as_view(), name='jogador-detail'),
     path('api/time/<int:pk>', TimeDetailViewSet.as_view(), name='time-detail'),
     path('api/user/<int:pk>', views_user.UserDetailViewSet.as_view(), name='user-detail'),
+    path('api/user/', views_user.UserViewSet.as_view(), name='user-detail'),
     path('api/docs/', schema_view),
     path('api/configuracao/', ConfiguracaoList.as_view(), name='configuracao-list'),
     path('api/jogadores/', JogadoresList.as_view(), name='configuracao-list'),
