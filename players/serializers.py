@@ -3,18 +3,20 @@ from users.serializers import DonoSerializerDetail
 from .models import Pelada, Configuracao, Jogador, Time
 
 
-class PeladaSerializers(serializers.ModelSerializer):
-    dono = DonoSerializerDetail()
 
-    class Meta:
-        model = Pelada
-        fields = '__all__'
 
 
 
 class ConfiguracaoSerializerDetail(serializers.ModelSerializer):
     class Meta:
         model = Configuracao
+        fields = '__all__'
+
+class PeladaSerializers(serializers.ModelSerializer):
+    configuracao = ConfiguracaoSerializerDetail()
+
+    class Meta:
+        model = Pelada
         fields = '__all__'
 
 class JogadoresSerializerDetail(serializers.ModelSerializer):

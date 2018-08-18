@@ -19,7 +19,7 @@ from players.views import *
 
 from django.contrib import admin
 from django.urls import path, include
-from players.views import PeladaViewSet, PeladaDetailViewSet,TimeDetailViewSet ,ConfiguracaoDetailViewSet, PeladaListUser, JogadorDetailViewSet
+from players.views import PeladaConfiguracaoDetailViewSet,PeladaViewSet, PeladaDetailViewSet,TimeDetailViewSet ,ConfiguracaoDetailViewSet, PeladaListUser, JogadorDetailViewSet
 from users import views as views_user
 from rest_framework_swagger.views import get_swagger_view
 # from players.views import
@@ -34,6 +34,7 @@ urlpatterns = [
     path('api/user-peladas/', PeladaListUser.as_view()),
     path('api/pelada/<int:pk>', PeladaDetailViewSet.as_view(), name='pelada-detail'),
     path('api/configuracao/<int:pk>', ConfiguracaoDetailViewSet.as_view(), name='configuracao-detail'),
+    path('api/pelada/<int:pk>/configuracao', PeladaConfiguracaoDetailViewSet.as_view(), name='configuracao-pelada-detail'),
     path('api/jogador/<int:pk>', JogadorDetailViewSet.as_view(), name='jogador-detail'),
     path('api/time/<int:pk>', TimeDetailViewSet.as_view(), name='time-detail'),
     path('api/user/<int:pk>', views_user.UserDetailViewSet.as_view(), name='user-detail'),

@@ -67,6 +67,19 @@ class TimeDetailViewSet(mixins.IsPeladaMixin,generics.RetrieveUpdateDestroyAPIVi
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class PeladaConfiguracaoDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
+
+    name = 'configuracao-pelada-detail'
+    queryset =  Pelada.objects.all()
+    serializer_class = serializers.ConfiguracaoSerializerDetail
+    model = Pelada
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        configuracao = instance.configuracao
+       
+        return Response(status=status.HTTP_200_OK,data=serializers.ConfiguracaoSerializerDetail(configuracao,context={'request': request}).data)
+
 class ConfiguracaoDetailViewSet(mixins.IsPeladaMixin,generics.RetrieveUpdateDestroyAPIView):
 
     name = 'configuracao-detail'
@@ -108,7 +121,7 @@ class ConfiguracaoList(generics.ListCreateAPIView):
         return Response(status=status.HTTP_200_OK,
                         data=serializers.ConfiguracaoSerializerDetail(configuracoes, many=True, context={'request': request}).data)
 
-class JogadoresList(mixins.FilteringAndOrderingMixin, generics.ListCreateAPIView):
+class JogadoresList(generics.ListCreateAPIView):
     filter_backends = (
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -134,17 +147,7 @@ class JogadoresList(mixins.FilteringAndOrderingMixin, generics.ListCreateAPIView
         jogador = Jogador.objects.filter(pelada__dono=user)
         return Response(serializer.data)
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        pelada = request.data['pelada'].split('/')[5]
-        if Pelada.objects.filter(dono=request.user, pk=pelada).count() > 0:
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        else:
-            return Response({"status":"Voce só pode adicionar jogadores as suas peladas"},status=status.HTTP_400_BAD_REQUEST)
-
+    
 
 
 
@@ -174,21 +177,8 @@ class PeladaListUser(generics.ListCreateAPIView):
 
         return data
 
-    def post(self, request, *args, **kwargs):
-        dono = request.data['dono']
-        dono = dono.split('/')
-        tamanho = len(dono)
-        dono = int(dono[tamanho - 1])
-        serializer = self.serializer_class(data=request.data, context={'request': request})
-        if dono == self.request.user.id:
-
-            if serializer.is_valid():
-                pelada = serializer.save()
-
-                return Response(status=status.HTTP_201_CREATED,
-                                    data=serializers.PeladaSerializers(pelada, context={'request': request}).data)
-        else:
-            raise exceptions.NotAcceptable(detail=('O usuario só pode criar peladas para ele.'))
+    def perform_create(self, serializer):
+        serializer.save(dono=self.request.user)
 
 
 class CreateTimes(viewsets.ViewSet):
