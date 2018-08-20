@@ -163,7 +163,8 @@ class PeladaListUser(generics.ListCreateAPIView):
             user = self.request.user
             peladas = Pelada.objects.filter(dono=user)
         return Response(status=status.HTTP_200_OK,
-                        data=serializers.PeladaSerializers(peladas, many=True, context={'request': request}).data)
+                        data=serializers.PeladaSerializers(peladas, 
+                            many=True, context={'request': request}).data)
 
 
 
@@ -178,7 +179,20 @@ class PeladaListUser(generics.ListCreateAPIView):
         return data
 
     def perform_create(self, serializer):
-        serializer.save(dono=self.request.user)
+        tempos = serializer['configuracao']['tempos'].value
+        tempo_duracao = serializer['configuracao']['tempo_duracao'].value
+        limite_gols = serializer['configuracao']['limite_gols'].value
+        qtd_jogadores = serializer['configuracao']['qtd_jogadores'].value
+        tipo_sorteio = serializer['configuracao']['tipo_sorteio'].value
+        nome = serializer['nome'].value
+        configuracao =  Configuracao.objects.create(tempos=tempos, tempo_duracao=tempo_duracao, limite_gols=limite_gols, 
+            qtd_jogadores=qtd_jogadores,
+            tipo_sorteio=tipo_sorteio
+            )
+        Pelada.objects.create(configuracao=configuracao, nome = nome, dono = self.request.user)
+
+        # serializer.save(dono=self.request.user)
+
 
 
 class CreateTimes(viewsets.ViewSet):

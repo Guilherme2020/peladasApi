@@ -15,6 +15,8 @@ class ConfiguracaoSerializerDetail(serializers.ModelSerializer):
 class PeladaSerializers(serializers.ModelSerializer):
     configuracao = ConfiguracaoSerializerDetail()
 
+    
+
     class Meta:
         model = Pelada
         fields = '__all__'
